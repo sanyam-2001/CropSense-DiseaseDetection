@@ -28,11 +28,13 @@ def upload_image():
         return 'No image file provided', 410
     fileName = str(calendar.timegm(time.gmtime())) + image_file.filename
     image_file.save(os.path.join('./files', fileName))
+    # returns a list of tuple (confidence, key)
     solutions = predict.predictPool(fileName)
+    sorted(solutions, key=lambda x: x[0])
     data = {
         "success": True,
         "code": 200,
-        "data": solutions[0]
+        "data": solutions[0][1]
     }
     response = jsonify(data)
     response.headers.add("Access-Control-Allow-Origin", "*")

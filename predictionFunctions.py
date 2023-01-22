@@ -8,6 +8,7 @@ from PIL import Image
 modelMNv2_224 = keras.models.load_model('./models/MNv2_224.h5')
 modelMNv2_256 = keras.models.load_model('./models/MNv2_256.h5')
 model_Customnet = keras.models.load_model('./models/Custom.h5')
+model_Resnet = keras.models.load_model('./models/Resnet.h5')
 
 class_names = ['Tomato___Bacterial_spot',
                'Tomato___Early_blight',
@@ -26,13 +27,14 @@ def predictMNv2_224(path):
     img = cv2.resize(img, (224, 224))
     img = img.reshape(1, 224, 224, 3)
     predict = modelMNv2_224.predict(img)
+    confidence = round(100 * (np.max(predict[0])), 2)
     idx = np.argmax(predict)
     f = open('./categories.json')
     data = json.load(f)
     for key, value in data.items():
         if value == idx:
             ans = key
-    return ans
+    return [confidence, ans]
 
 
 def predictMNv2_256(path):
@@ -40,13 +42,14 @@ def predictMNv2_256(path):
     img = cv2.resize(img, (256, 256))
     img = img.reshape(1, 256, 256, 3)
     predict = modelMNv2_256.predict(img)
+    confidence = round(100 * (np.max(predict[0])), 2)
     idx = np.argmax(predict)
     f = open('./categories.json')
     data = json.load(f)
     for key, value in data.items():
         if value == idx:
             ans = key
-    return ans
+    return [confidence, ans]
 
 
 def predict_custom(img):
@@ -55,6 +58,17 @@ def predict_custom(img):
     img_array = tf.keras.preprocessing.image.img_to_array(PIL_IMG)
     img_array = tf.expand_dims(img_array, 0)
     predictions = model_Customnet.predict(img_array)
-
+    confidence = round(100 * (np.max(predictions[0])), 2)
     predicted_class = class_names[np.argmax(predictions[0])]
-    return predicted_class
+    return [confidence, predicted_class]
+
+
+def predict_Resnet(img):
+    PIL_IMG = Image.open(img)
+    PIL_IMG = PIL_IMG.resize((256, 256), resample=0)
+    img_array = tf.keras.preprocessing.image.img_to_array(PIL_IMG)
+    img_array = tf.expand_dims(img_array, 0)
+    predictions = model_Resnet.predict(img_array)
+    confidence = round(100 * (np.max(predictions[0])), 2)
+    predicted_class = class_names[np.argmax(predictions[0])]
+    return [confidence, predicted_class]
